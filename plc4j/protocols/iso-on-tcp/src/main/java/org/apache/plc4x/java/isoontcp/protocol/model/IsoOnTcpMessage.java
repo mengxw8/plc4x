@@ -19,12 +19,75 @@
 package org.apache.plc4x.java.isoontcp.protocol.model;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.base.messages.PlcRawMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IsoOnTcpMessage extends PlcRawMessage {
 
+    private static final Logger logger = LoggerFactory.getLogger(IsoOnTcpMessage.class);
+
+    public static final byte ISO_ON_TCP_MAGIC_NUMBER = 0x03;
+
     public IsoOnTcpMessage(ByteBuf userData) {
         super(userData);
+    }
+
+    public static class ModelIO implements org.apache.plc4x.java.spi.ModelIO<IsoOnTcpMessage> {
+
+        @Override
+        public void encode(IsoOnTcpMessage model, ByteBuf out) throws PlcProtocolException {
+            final ByteBuf userData = model.getUserData();
+
+            int packetSize = userData.readableBytes() + 4;
+
+            // Version (is always constant 0x03)
+            out.writeByte(ISO_ON_TCP_MAGIC_NUMBER);
+            // Reserved (is always constant 0x00)
+            out.writeByte((byte) 0x00);
+            // Packet length (including ISOonTCP header)
+            // ("remaining" returns the number of bytes left to read in this buffer.
+            // It is usually set to a read position of 0 and a limit at the end.
+            // So in general remaining is equivalent to a non-existing
+            // "userData.size()" method.)
+            out.writeShort((short) packetSize);
+
+            // Output the payload.
+            out.writeBytes(userData);
+        }
+
+        @Override
+        public IsoOnTcpMessage decode(ByteBuf in) throws PlcProtocolException {
+            // If at least 4 bytes are readable, peek into them (without changing the read position)
+            // and get the packet length. Only if the available amount of readable bytes is larger or
+            // equal to this, continue processing the rest.
+            if(in.readableBytes() >= 4) {
+                // The ISO on TCP protocol is really simple and in this case the buffer length
+                // will take care of the higher levels not reading more than is in the packet.
+                // So we just gobble up the header and continue reading in higher levels.
+                if (in.getByte(0) != ISO_ON_TCP_MAGIC_NUMBER) {
+                    logger.warn("Expecting ISO on TCP magic number: {}", ISO_ON_TCP_MAGIC_NUMBER);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Got Data: {}", ByteBufUtil.hexDump(in));
+                    }
+                    throw new PlcProtocolException(
+                        String.format("Expecting ISO on TCP magic number: %02X", ISO_ON_TCP_MAGIC_NUMBER));
+                }
+                // Byte 1 is a reserved byte set to 0x00
+                short packetLength = in.getShort(2);
+                if(in.readableBytes() >= packetLength) {
+                    // Skip the 4 bytes we peeked into manually.
+                    in.skipBytes(4);
+                    // Simply place the current buffer to the output ... the next handler will continue.
+                    ByteBuf payload = in.readBytes(packetLength - 4);
+                    return new IsoOnTcpMessage(payload);
+                }
+            }
+            return null;
+        }
+
     }
 
 }

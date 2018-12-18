@@ -55,7 +55,7 @@ public class IsoOnTcpProtocolTest {
         assertThat(obj, instanceOf(ByteBuf.class));
         ByteBuf byteBuf = (ByteBuf) obj;
         assertThat("The TCP on ISO Header should add 4 bytes to the data sent", byteBuf.readableBytes(), equalTo(4 + 3));
-        assertThat(byteBuf.getByte(0), equalTo(IsoOnTcpProtocol.ISO_ON_TCP_MAGIC_NUMBER) );
+        assertThat(byteBuf.getByte(0), equalTo(IsoOnTcpMessage.ISO_ON_TCP_MAGIC_NUMBER) );
         assertThat("The length value in the packet should reflect the size of the entire data being sent", byteBuf.getShort(2), equalTo((short) (4 + 3)) );
     }
 
@@ -66,7 +66,7 @@ public class IsoOnTcpProtocolTest {
     @Category(FastTests.class)
     public void decode() {
         EmbeddedChannel channel = new EmbeddedChannel(new IsoOnTcpProtocol());
-        channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpProtocol.ISO_ON_TCP_MAGIC_NUMBER,
+        channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpMessage.ISO_ON_TCP_MAGIC_NUMBER,
             (byte) 0x00, (byte) 0x00, (byte) 0x0D,
             (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08, (byte) 0x09}));
         channel.checkException();
@@ -106,7 +106,7 @@ public class IsoOnTcpProtocolTest {
     @Category(FastTests.class)
     public void decodeWayTooShort() {
         EmbeddedChannel channel = new EmbeddedChannel(new IsoOnTcpProtocol());
-        channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpProtocol.ISO_ON_TCP_MAGIC_NUMBER,
+        channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpMessage.ISO_ON_TCP_MAGIC_NUMBER,
             (byte) 0x00, (byte) 0x00, (byte) 0x0D}));
         channel.checkException();
         Object obj = channel.readInbound();
@@ -121,7 +121,7 @@ public class IsoOnTcpProtocolTest {
     @Category(FastTests.class)
     public void decodeTooShort() {
         EmbeddedChannel channel = new EmbeddedChannel(new IsoOnTcpProtocol());
-        channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpProtocol.ISO_ON_TCP_MAGIC_NUMBER,
+        channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpMessage.ISO_ON_TCP_MAGIC_NUMBER,
             (byte) 0x00, (byte) 0x00, (byte) 0x0D,
             (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08}));
         channel.checkException();
@@ -149,7 +149,7 @@ public class IsoOnTcpProtocolTest {
 
             // Do some deserialization
             EmbeddedChannel channel = new EmbeddedChannel(new IsoOnTcpProtocol());
-            channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpProtocol.ISO_ON_TCP_MAGIC_NUMBER,
+            channel.writeInbound(Unpooled.wrappedBuffer(new byte[]{IsoOnTcpMessage.ISO_ON_TCP_MAGIC_NUMBER,
                 (byte) 0x00, (byte) 0x00, (byte) 0x0D,
                 (byte) 0x01, (byte) 0x02, (byte) 0x03, (byte) 0x04, (byte) 0x05, (byte) 0x06, (byte) 0x07, (byte) 0x08, (byte) 0x09}));
             channel.checkException();

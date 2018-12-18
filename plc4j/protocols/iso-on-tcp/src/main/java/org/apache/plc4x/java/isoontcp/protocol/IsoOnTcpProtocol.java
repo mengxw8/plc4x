@@ -31,9 +31,13 @@ import java.util.List;
 
 public class IsoOnTcpProtocol extends PlcByteToMessageCodec<IsoOnTcpMessage> {
 
-    static final byte ISO_ON_TCP_MAGIC_NUMBER = 0x03;
-
     private static final Logger logger = LoggerFactory.getLogger(IsoOnTcpProtocol.class);
+
+    private final IsoOnTcpMessage.ModelIO rootModelIO;
+
+    public IsoOnTcpProtocol() {
+        rootModelIO = new IsoOnTcpMessage.ModelIO();
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Encoding
@@ -42,25 +46,11 @@ public class IsoOnTcpProtocol extends PlcByteToMessageCodec<IsoOnTcpMessage> {
     @Override
     protected void encode(ChannelHandlerContext ctx, IsoOnTcpMessage in, ByteBuf out) throws Exception {
         logger.debug("ISO on TCP Message sent");
-        // At this point of processing all higher levels have already serialized their payload.
-        // This data is passed to the lower levels in form of an IoBuffer.
-        final ByteBuf userData = in.getUserData();
-
-        int packetSize = userData.readableBytes() + 4;
-
-        // Version (is always constant 0x03)
-        out.writeByte(ISO_ON_TCP_MAGIC_NUMBER);
-        // Reserved (is always constant 0x00)
-        out.writeByte((byte) 0x00);
-        // Packet length (including ISOonTCP header)
-        // ("remaining" returns the number of bytes left to read in this buffer.
-        // It is usually set to a read position of 0 and a limit at the end.
-        // So in general remaining is equivalent to a non-existing
-        // "userData.size()" method.)
-        out.writeShort((short) packetSize);
-
-        // Output the payload.
-        out.writeBytes(userData);
+        try {
+            rootModelIO.encode(in, out);
+        } catch (PlcProtocolException e) {
+            exceptionCaught(ctx, e);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,37 +62,14 @@ public class IsoOnTcpProtocol extends PlcByteToMessageCodec<IsoOnTcpMessage> {
         if(logger.isTraceEnabled()) {
             logger.trace("Got Data: {}", ByteBufUtil.hexDump(in));
         }
-        // If at least 4 bytes are readable, peek into them (without changing the read position)
-        // and get the packet length. Only if the available amount of readable bytes is larger or
-        // equal to this, continue processing the rest.
-        /*if(chunkedResponse != null) {
-            chunkedResponse.writeBytes(in);
-        } else*/ if(in.readableBytes() >= 4) {
-            logger.debug("ISO on TCP Message received");
-            // The ISO on TCP protocol is really simple and in this case the buffer length
-            // will take care of the higher levels not reading more than is in the packet.
-            // So we just gobble up the header and continue reading in higher levels.
-            if (in.getByte(0) != ISO_ON_TCP_MAGIC_NUMBER) {
-                logger.warn("Expecting ISO on TCP magic number: {}", ISO_ON_TCP_MAGIC_NUMBER);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Got Data: {}", ByteBufUtil.hexDump(in));
-                }
-                exceptionCaught(ctx, new PlcProtocolException(
-                    String.format("Expecting ISO on TCP magic number: %02X", ISO_ON_TCP_MAGIC_NUMBER)));
-                return;
+        logger.debug("ISO on TCP Message received");
+        try {
+            IsoOnTcpMessage decodedMessage = rootModelIO.decode(in);
+            if(decodedMessage != null) {
+                out.add(decodedMessage);
             }
-            // Byte 1 is a reserved byte set to 0x00
-            short packetLength = in.getShort(2);
-            if(in.readableBytes() >= packetLength) {
-                // Skip the 4 bytes we peeked into manually.
-                in.skipBytes(4);
-                // Simply place the current buffer to the output ... the next handler will continue.
-                ByteBuf payload = in.readBytes(packetLength - 4);
-                out.add(new IsoOnTcpMessage(payload));
-            /*} else {
-                chunkedResponse = Unpooled.buffer(packetLength);
-                chunkedResponse.writeBytes(in, packetLength);*/
-            }
+        } catch (PlcProtocolException e) {
+            exceptionCaught(ctx, e);
         }
     }
 
