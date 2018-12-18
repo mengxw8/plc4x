@@ -87,7 +87,6 @@ public class IsoOnTcpMessage extends PlcRawMessage {
             }
             return null;
         }
-
     }
 
 }

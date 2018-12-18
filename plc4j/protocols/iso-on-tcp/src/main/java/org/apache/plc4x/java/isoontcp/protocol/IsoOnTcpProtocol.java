@@ -18,20 +18,12 @@
  */
 package org.apache.plc4x.java.isoontcp.protocol;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.channel.ChannelHandlerContext;
-import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
-import org.apache.plc4x.java.base.PlcByteToMessageCodec;
+
 import org.apache.plc4x.java.isoontcp.protocol.model.IsoOnTcpMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.plc4x.java.spi.BaseToByteProtocol;
+import org.apache.plc4x.java.spi.ModelIO;
 
-import java.util.List;
-
-public class IsoOnTcpProtocol extends PlcByteToMessageCodec<IsoOnTcpMessage> {
-
-    private static final Logger logger = LoggerFactory.getLogger(IsoOnTcpProtocol.class);
+public class IsoOnTcpProtocol extends BaseToByteProtocol<IsoOnTcpMessage> {
 
     private final IsoOnTcpMessage.ModelIO rootModelIO;
 
@@ -39,38 +31,9 @@ public class IsoOnTcpProtocol extends PlcByteToMessageCodec<IsoOnTcpMessage> {
         rootModelIO = new IsoOnTcpMessage.ModelIO();
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Encoding
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     @Override
-    protected void encode(ChannelHandlerContext ctx, IsoOnTcpMessage in, ByteBuf out) throws Exception {
-        logger.debug("ISO on TCP Message sent");
-        try {
-            rootModelIO.encode(in, out);
-        } catch (PlcProtocolException e) {
-            exceptionCaught(ctx, e);
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Decoding
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @Override
-    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        if(logger.isTraceEnabled()) {
-            logger.trace("Got Data: {}", ByteBufUtil.hexDump(in));
-        }
-        logger.debug("ISO on TCP Message received");
-        try {
-            IsoOnTcpMessage decodedMessage = rootModelIO.decode(in);
-            if(decodedMessage != null) {
-                out.add(decodedMessage);
-            }
-        } catch (PlcProtocolException e) {
-            exceptionCaught(ctx, e);
-        }
+    protected ModelIO<IsoOnTcpMessage> getRootModelIo() {
+        return rootModelIO;
     }
 
 }
