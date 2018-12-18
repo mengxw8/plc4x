@@ -41,7 +41,7 @@ public class TsapParameterTests {
     @Category(FastTests.class)
     public void calledParameter() {
         short calledTsapId = 0x1234;
-        tsapParameter = new CalledTsapParameter(calledTsapId);
+        tsapParameter = new TsapParameterCalled(calledTsapId);
 
         assertThat("TSAP Id incorrect", tsapParameter.getTsapId(), equalTo(calledTsapId));
         assertThat(tsapParameter.getType(), equalTo(ParameterCode.CALLED_TSAP));
@@ -51,7 +51,7 @@ public class TsapParameterTests {
     @Category(FastTests.class)
     public void callingParameter() {
         short callingTsapId = 0x4321;
-        tsapParameter = new CallingTsapParameter(callingTsapId);
+        tsapParameter = new TsapParameterCalling(callingTsapId);
 
         assertThat("TSAP Id incorrect", tsapParameter.getTsapId(), equalTo(callingTsapId));
         assertThat(tsapParameter.getType(), equalTo(ParameterCode.CALLING_TSAP));

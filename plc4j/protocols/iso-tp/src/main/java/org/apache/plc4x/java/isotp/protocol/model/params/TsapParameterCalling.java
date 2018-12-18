@@ -16,19 +16,19 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 */
-package org.apache.plc4x.java.isotp.protocol.model.tpdus;
+package org.apache.plc4x.java.isotp.protocol.model.params;
 
-import io.netty.buffer.ByteBuf;
-import org.apache.plc4x.java.isotp.protocol.model.params.Parameter;
-import org.apache.plc4x.java.isotp.protocol.model.types.ProtocolClass;
-import org.apache.plc4x.java.isotp.protocol.model.types.TpduCode;
+import org.apache.plc4x.java.isotp.protocol.model.types.ParameterCode;
 
-import java.util.List;
+public class TsapParameterCalling extends TsapParameter {
 
-public class ConnectionRequestTpdu extends ConnectionTpdu {
+    public TsapParameterCalling(short tsapId) {
+        super(tsapId);
+    }
 
-    public ConnectionRequestTpdu(short destinationReference, short sourceReference, ProtocolClass protocolClass, List<Parameter> parameters, ByteBuf userData) {
-        super(TpduCode.CONNECTION_REQUEST, destinationReference, sourceReference, protocolClass, parameters, userData);
+    @Override
+    public ParameterCode getType() {
+        return ParameterCode.CALLING_TSAP;
     }
 
 }

@@ -22,9 +22,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import org.apache.plc4x.java.isoontcp.protocol.model.IsoOnTcpMessage;
-import org.apache.plc4x.java.isotp.protocol.model.IsoTPMessage;
+import org.apache.plc4x.java.isotp.protocol.model.*;
 import org.apache.plc4x.java.isotp.protocol.model.params.*;
-import org.apache.plc4x.java.isotp.protocol.model.tpdus.*;
 import org.apache.plc4x.java.isotp.protocol.model.types.*;
 import org.apache.plc4x.test.FastTests;
 import org.junit.After;
@@ -63,14 +62,14 @@ public class IsoTPProtocolTest {
     }
 
     @After
-    public void terDown() {
+    public void tearDown() {
         isoTPProtocol = null;
     }
 
     @Test
     @Category(FastTests.class)
-    public void encodeConnectionRequest() {
-        ConnectionRequestTpdu tpdu = new ConnectionRequestTpdu((short) 0x1, (short) (0x2), ProtocolClass.CLASS_0, Collections.emptyList(), buf);
+    public void encodeConnectionRequest() throws Exception {
+        IsoTPConnectionRequestTpdu tpdu = new IsoTPConnectionRequestTpdu((short) 0x1, (short) (0x2), ProtocolClass.CLASS_0, Collections.emptyList(), buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -88,7 +87,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeConnectionRequest() {
+    public void decodeConnectionRequest() throws Exception {
         buf.writeByte(0x6) // header length
             .writeByte(TpduCode.CONNECTION_REQUEST.getCode())
             .writeShort(0x01) // destination reference
@@ -100,7 +99,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ConnectionRequestTpdu requestTpdu = (ConnectionRequestTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPConnectionRequestTpdu requestTpdu = (IsoTPConnectionRequestTpdu) out.get(0);
 
         assertThat(requestTpdu.getTpduCode(), equalTo(TpduCode.CONNECTION_REQUEST));
         assertThat(requestTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -111,8 +110,8 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeDisconnectionRequest() {
-        DisconnectRequestTpdu tpdu = new DisconnectRequestTpdu((short) 0x1, (short) (0x2), DisconnectReason.NORMAL, Collections.emptyList(), buf);
+    public void encodeDisconnectionRequest() throws Exception {
+        IsoTPDisconnectRequestTpdu tpdu = new IsoTPDisconnectRequestTpdu((short) 0x1, (short) (0x2), DisconnectReason.NORMAL, Collections.emptyList(), buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -129,7 +128,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeDisconnectionRequest() {
+    public void decodeDisconnectionRequest() throws Exception {
         buf.writeByte(0x6) // header length
             .writeByte(TpduCode.DISCONNECT_REQUEST.getCode())
             .writeShort(0x01) // destination reference
@@ -141,7 +140,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        DisconnectRequestTpdu requestTpdu = (DisconnectRequestTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPDisconnectRequestTpdu requestTpdu = (IsoTPDisconnectRequestTpdu) out.get(0);
 
         assertThat(requestTpdu.getTpduCode(), equalTo(TpduCode.DISCONNECT_REQUEST));
         assertThat(requestTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -152,8 +151,8 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeData() {
-        DataTpdu tpdu = new DataTpdu(true, (byte) 0x7, Collections.emptyList(), buf);
+    public void encodeData() throws Exception {
+        IsoTPDataTpdu tpdu = new IsoTPDataTpdu(true, (byte) 0x7, Collections.emptyList(), buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -169,7 +168,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeDataEOT() {
+    public void decodeDataEOT() throws Exception {
         buf.writeByte(0x3) // header length
             .writeByte(TpduCode.DATA.getCode())
             .writeByte((byte) 0x81); // Tpdu code + EOT
@@ -179,7 +178,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        DataTpdu requestTpdu = (DataTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPDataTpdu requestTpdu = (IsoTPDataTpdu) out.get(0);
 
         assertThat(requestTpdu.getTpduCode(), equalTo(TpduCode.DATA));
         assertThat(requestTpdu.getTpduRef(), equalTo((byte) 0x1));
@@ -189,7 +188,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeData() {
+    public void decodeData() throws Exception {
         buf.writeByte(0x3) // header length
             .writeByte(TpduCode.DATA.getCode())
             .writeByte((byte) 0x1); // Tpdu code
@@ -199,7 +198,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        DataTpdu requestTpdu = (DataTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPDataTpdu requestTpdu = (IsoTPDataTpdu) out.get(0);
 
         assertThat(requestTpdu.getTpduCode(), equalTo(TpduCode.DATA));
         assertThat(requestTpdu.getTpduRef(), equalTo((byte) 0x1));
@@ -209,8 +208,8 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeConnectionConfirm() {
-        ConnectionConfirmTpdu tpdu = new ConnectionConfirmTpdu((short) 0x1, (short) (0x2), ProtocolClass.CLASS_1, Collections.emptyList(), buf);
+    public void encodeConnectionConfirm() throws Exception {
+        IsoTPConnectionConfirmTpdu tpdu = new IsoTPConnectionConfirmTpdu((short) 0x1, (short) (0x2), ProtocolClass.CLASS_1, Collections.emptyList(), buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -228,7 +227,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeConnectionConfirm() {
+    public void decodeConnectionConfirm() throws Exception {
         buf.writeByte(0x6) // header length
             .writeByte(TpduCode.CONNECTION_CONFIRM.getCode())
             .writeShort(0x01) // destination reference
@@ -240,7 +239,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ConnectionConfirmTpdu requestTpdu = (ConnectionConfirmTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPConnectionConfirmTpdu requestTpdu = (IsoTPConnectionConfirmTpdu) out.get(0);
 
         assertThat(requestTpdu.getTpduCode(), equalTo(TpduCode.CONNECTION_CONFIRM));
         assertThat(requestTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -251,8 +250,8 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeDisconnectionConfirm() {
-        DisconnectConfirmTpdu tpdu = new DisconnectConfirmTpdu((short) 0x1, (short) (0x2), Collections.emptyList(), buf);
+    public void encodeDisconnectionConfirm() throws Exception {
+        IsoTPDisconnectConfirmTpdu tpdu = new IsoTPDisconnectConfirmTpdu((short) 0x1, (short) (0x2), Collections.emptyList(), buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -269,7 +268,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeDisconnectionConfirm() {
+    public void decodeDisconnectionConfirm() throws Exception {
         buf.writeByte(0x5) // header length
             .writeByte(TpduCode.DISCONNECT_CONFIRM.getCode())
             .writeShort(0x01) // destination reference
@@ -281,7 +280,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        DisconnectConfirmTpdu requestTpdu = (DisconnectConfirmTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPDisconnectConfirmTpdu requestTpdu = (IsoTPDisconnectConfirmTpdu) out.get(0);
 
         assertThat(requestTpdu.getTpduCode(), equalTo(TpduCode.DISCONNECT_CONFIRM));
         assertThat(requestTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -291,8 +290,8 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeError() {
-        ErrorTpdu tpdu = new ErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, Collections.emptyList(), buf);
+    public void encodeError() throws Exception {
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, Collections.emptyList(), buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -309,15 +308,15 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeCallingParameter() {
+    public void encodeCallingParameter() throws Exception {
         ArrayList<Parameter> parmameters = new ArrayList<>();
         short firstByte = (short) (DeviceGroup.PG_OR_PC.getCode() << 8);
         short secondByte = (short) ((0x7 << 4) | (0xe1 & 0x0F));
-        CallingTsapParameter callingParameter = new CallingTsapParameter(
+        TsapParameterCalling callingParameter = new TsapParameterCalling(
             // slot number too big and overflows into rack
             (short) (firstByte | secondByte));
         parmameters.add(callingParameter);
-        ErrorTpdu tpdu = new ErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -340,11 +339,11 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeChecksumParameter() {
+    public void encodeChecksumParameter() throws Exception {
         ArrayList<Parameter> parmameters = new ArrayList<>();
         ChecksumParameter checksumParameter = new ChecksumParameter((byte) 0x77);
         parmameters.add(checksumParameter);
-        ErrorTpdu tpdu = new ErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -364,12 +363,12 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeAditionalInformationParameter() {
+    public void encodeAditionalInformationParameter() throws Exception {
         ArrayList<Parameter> parmameters = new ArrayList<>();
         byte[] data = {'O', 'p', 'p', 's'};
         DisconnectAdditionalInformationParameter informationParameter = new DisconnectAdditionalInformationParameter(data);
         parmameters.add(informationParameter);
-        ErrorTpdu tpdu = new ErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -392,11 +391,11 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeSizeParameter() {
+    public void encodeSizeParameter() throws Exception {
         ArrayList<Parameter> parmameters = new ArrayList<>();
         TpduSizeParameter sizeParameter = new TpduSizeParameter(TpduSize.SIZE_512);
         parmameters.add(sizeParameter);
-        ErrorTpdu tpdu = new ErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu((short) 0x1, RejectCause.REASON_NOT_SPECIFIED, parmameters, buf);
 
         isoTPProtocol.encode(ctx, tpdu, out);
 
@@ -416,7 +415,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeError() {
+    public void decodeError() throws Exception {
         buf.writeByte(0x4) // header length
             .writeByte(TpduCode.TPDU_ERROR.getCode())
             .writeShort(0x01) // destination reference
@@ -427,7 +426,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ErrorTpdu errorTpdu = (ErrorTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPErrorTpdu errorTpdu = (IsoTPErrorTpdu) out.get(0);
 
         assertThat(errorTpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat(errorTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -437,7 +436,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeNullRequest() {
+    public void encodeNullRequest() throws Exception {
         isoTPProtocol.encode(ctx, null, out);
         assertThat("Message not decoded", out, empty());
 
@@ -448,7 +447,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeNull() {
+    public void decodeNull() throws Exception {
         IsoOnTcpMessage in = new IsoOnTcpMessage(buf);
 
         isoTPProtocol.decode(ctx, in, out);
@@ -460,18 +459,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void encodeUnsupported() {
-        ArrayList<Parameter> parmameters = new ArrayList<>();
-        CustomTpdu tpdu = new CustomTpdu((byte) 0x7F, parmameters, buf);
-
-        isoTPProtocol.encode(ctx, tpdu, out);
-        assertThat("Message not decoded", out, empty());
-    }
-
-
-    @Test
-    @Category(FastTests.class)
-    public void decodeUnsupported() {
+    public void decodeUnsupported() throws Exception {
         IsoOnTcpMessage in = new IsoOnTcpMessage(buf);
         buf.writeByte(0x3) // header length
             .writeByte(0x7F)
@@ -482,7 +470,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeCallingParameter() {
+    public void decodeCallingParameter() throws Exception {
         buf.writeByte(0x8) // header length
             .writeByte(TpduCode.TPDU_ERROR.getCode())
             .writeShort(0x01) // destination reference
@@ -497,13 +485,13 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ErrorTpdu errorTpdu = (ErrorTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPErrorTpdu errorTpdu = (IsoTPErrorTpdu) out.get(0);
 
         assertThat(errorTpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat(errorTpdu.getDestinationReference(), equalTo((short) 0x1));
         assertThat(errorTpdu.getRejectCause(), equalTo(RejectCause.REASON_NOT_SPECIFIED));
         assertThat(errorTpdu.getParameters(), hasSize(1));
-        CallingTsapParameter parameter = (CallingTsapParameter) errorTpdu.getParameters().get(0);
+        TsapParameterCalling parameter = (TsapParameterCalling) errorTpdu.getParameters().get(0);
         assertThat(parameter.getType(), equalTo(ParameterCode.CALLING_TSAP));
         short firstByte = (short) (DeviceGroup.PG_OR_PC.getCode() << 8);
         short secondByte = (short) ((0x1 << 4) | (0x7 & 0x0F));
@@ -513,7 +501,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeCalledParameter() {
+    public void decodeCalledParameter() throws Exception {
         buf.writeByte(0x8) // header length
             .writeByte(TpduCode.TPDU_ERROR.getCode())
             .writeShort(0x01) // destination reference
@@ -528,13 +516,13 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ErrorTpdu errorTpdu = (ErrorTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPErrorTpdu errorTpdu = (IsoTPErrorTpdu) out.get(0);
 
         assertThat(errorTpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat(errorTpdu.getDestinationReference(), equalTo((short) 0x1));
         assertThat(errorTpdu.getRejectCause(), equalTo(RejectCause.REASON_NOT_SPECIFIED));
         assertThat(errorTpdu.getParameters(), hasSize(1));
-        CalledTsapParameter parameter = (CalledTsapParameter) errorTpdu.getParameters().get(0);
+        TsapParameterCalled parameter = (TsapParameterCalled) errorTpdu.getParameters().get(0);
         assertThat(parameter.getType(), equalTo(ParameterCode.CALLED_TSAP));
         short firstByte = (short) (DeviceGroup.PG_OR_PC.getCode() << 8);
         short secondByte = (short) ((0x2 << 4) | (0x3 & 0x0F));
@@ -544,7 +532,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeChecksumParameter() {
+    public void decodeChecksumParameter() throws Exception {
         buf.writeByte(0x8) // header length
             .writeByte(TpduCode.TPDU_ERROR.getCode())
             .writeShort(0x01) // destination reference
@@ -558,7 +546,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ErrorTpdu errorTpdu = (ErrorTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPErrorTpdu errorTpdu = (IsoTPErrorTpdu) out.get(0);
 
         assertThat(errorTpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat(errorTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -571,7 +559,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeSizeParameter() {
+    public void decodeSizeParameter() throws Exception {
         buf.writeByte(0x8) // header length
             .writeByte(TpduCode.TPDU_ERROR.getCode())
             .writeShort(0x01) // destination reference
@@ -585,7 +573,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ErrorTpdu errorTpdu = (ErrorTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPErrorTpdu errorTpdu = (IsoTPErrorTpdu) out.get(0);
 
         assertThat(errorTpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat(errorTpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -598,7 +586,7 @@ public class IsoTPProtocolTest {
 
     @Test
     @Category(FastTests.class)
-    public void decodeAdditionalInformationParameter() {
+    public void decodeAdditionalInformationParameter() throws Exception {
         buf.writeByte(0x8) // header length
             .writeByte(TpduCode.TPDU_ERROR.getCode())
             .writeShort(0x01) // destination reference
@@ -616,7 +604,7 @@ public class IsoTPProtocolTest {
 
         assertThat("Message not decoded", out, hasSize(1));
 
-        ErrorTpdu errorTpdu = (ErrorTpdu) ((IsoTPMessage) out.get(0)).getTpdu();
+        IsoTPErrorTpdu errorTpdu = (IsoTPErrorTpdu) out.get(0);
 
         assertThat(errorTpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat(errorTpdu.getDestinationReference(), equalTo((short) 0x1));

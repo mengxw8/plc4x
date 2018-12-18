@@ -36,7 +36,7 @@ import org.apache.plc4x.java.base.events.ConnectedEvent;
 import org.apache.plc4x.java.base.messages.*;
 import org.apache.plc4x.java.isoontcp.protocol.IsoOnTcpProtocol;
 import org.apache.plc4x.java.isotp.protocol.IsoTPProtocol;
-import org.apache.plc4x.java.isotp.protocol.model.tpdus.DisconnectRequestTpdu;
+import org.apache.plc4x.java.isotp.protocol.model.IsoTPDisconnectRequestTpdu;
 import org.apache.plc4x.java.isotp.protocol.model.types.DeviceGroup;
 import org.apache.plc4x.java.isotp.protocol.model.types.DisconnectReason;
 import org.apache.plc4x.java.isotp.protocol.model.types.TpduSize;
@@ -228,7 +228,7 @@ public class S7PlcConnection extends NettyPlcConnection implements PlcReader, Pl
     public void close() throws PlcConnectionException {
         if ((channel != null) && channel.isOpen()) {
             // Send the PLC a message that the connection is being closed.
-            DisconnectRequestTpdu disconnectRequest = new DisconnectRequestTpdu(
+            IsoTPDisconnectRequestTpdu disconnectRequest = new IsoTPDisconnectRequestTpdu(
                 (short) 0x0000, (short) 0x000F, DisconnectReason.NORMAL, Collections.emptyList(),
                 Unpooled.EMPTY_BUFFER);
 

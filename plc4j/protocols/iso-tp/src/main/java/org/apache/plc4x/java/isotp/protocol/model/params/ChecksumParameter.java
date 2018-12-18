@@ -18,6 +18,8 @@ under the License.
 */
 package org.apache.plc4x.java.isotp.protocol.model.params;
 
+import io.netty.buffer.ByteBuf;
+import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.isotp.protocol.model.types.ParameterCode;
 
 public class ChecksumParameter implements Parameter {
@@ -35,6 +37,26 @@ public class ChecksumParameter implements Parameter {
 
     public byte getChecksum() {
         return checksum;
+    }
+
+    @Override
+    public byte getLength() {
+        return 3;
+    }
+
+    @Override
+    public void serialize(ByteBuf out) {
+        out.writeByte(getType().getCode());
+        // Output the size of the rest of the header (Total size of the header - 2)
+        out.writeByte(getLength() - 2);
+        out.writeByte(getChecksum());
+    }
+
+    public static ChecksumParameter decode(ByteBuf in) throws PlcProtocolException {
+        // Skip the length.
+        in.skipBytes(1);
+        byte checksum = in.readByte();
+        return new ChecksumParameter(checksum);
     }
 
 }

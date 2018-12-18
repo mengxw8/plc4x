@@ -18,6 +18,10 @@ under the License.
 */
 package org.apache.plc4x.java.isotp.protocol.model.params;
 
+import io.netty.buffer.ByteBuf;
+import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
+import org.apache.plc4x.java.isotp.protocol.model.types.ParameterCode;
+
 /**
  * Base class for calling and called TSAPs
  */
@@ -31,6 +35,34 @@ public abstract class TsapParameter implements Parameter {
 
     public short getTsapId() {
         return tsapId;
+    }
+
+    @Override
+    public byte getLength() {
+        return 4;
+    }
+
+    @Override
+    public void serialize(ByteBuf out) {
+        out.writeByte(getType().getCode());
+        // Output the size of the rest of the header (Total size of the header - 2)
+        out.writeByte(getLength() - 2);
+        out.writeShort(getTsapId());
+    }
+
+    public static TsapParameter decode(ByteBuf in, ParameterCode parameterCode) throws PlcProtocolException {
+        // Skip the length.
+        in.skipBytes(1);
+        short tsapId = in.readShort();
+        switch (parameterCode) {
+            case CALLING_TSAP:
+                return new TsapParameterCalling(tsapId);
+            case CALLED_TSAP:
+                return new TsapParameterCalled(tsapId);
+            default:
+                // This shouldn't happen if it's called from the Parameter.decode method.
+                throw new PlcProtocolException("Internal Error");
+        }
     }
 
 }

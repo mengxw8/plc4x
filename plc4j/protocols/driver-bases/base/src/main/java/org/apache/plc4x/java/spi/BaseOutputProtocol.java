@@ -29,22 +29,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public abstract class BaseToByteProtocol<T> extends PlcByteToMessageCodec<T> {
+/**
+ * Output protocols produce pure byte output and are typically the lowest level
+ * of any protocol hierarchy.
+ *
+ * @param <HI_TYPE> the type of objects this protocol offers to higher level protocols.
+ */
+public abstract class BaseOutputProtocol<HI_TYPE extends Model<ByteBuf>> extends PlcByteToMessageCodec<HI_TYPE> {
 
-    private static final Logger logger = LoggerFactory.getLogger(BaseToByteProtocol.class);
+    private static final Logger logger = LoggerFactory.getLogger(BaseOutputProtocol.class);
 
-
-    protected abstract ModelIO<T> getRootModelIo();
+    protected abstract ModelIO<HI_TYPE, ByteBuf> getRootModelIo();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Encoding
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, T in, ByteBuf out) throws Exception {
-        logger.debug("ISO on TCP Message sent");
+    protected void encode(ChannelHandlerContext ctx, HI_TYPE in, ByteBuf out) throws Exception {
         try {
-            getRootModelIo().encode(in, out);
+            out.writeBytes(in.serialize());
         } catch (PlcProtocolException e) {
             exceptionCaught(ctx, e);
         }
@@ -59,9 +63,8 @@ public abstract class BaseToByteProtocol<T> extends PlcByteToMessageCodec<T> {
         if(logger.isTraceEnabled()) {
             logger.trace("Got Data: {}", ByteBufUtil.hexDump(in));
         }
-        logger.debug("ISO on TCP Message received");
         try {
-            T decodedMessage = getRootModelIo().decode(in);
+            HI_TYPE decodedMessage = getRootModelIo().decode(in);
             if(decodedMessage != null) {
                 out.add(decodedMessage);
             }

@@ -17,14 +17,14 @@
  under the License.
  */
 
-package org.apache.plc4x.java.isotp.protocol.model.tpdus;
+package org.apache.plc4x.java.isotp.protocol.model;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.apache.plc4x.java.isotp.protocol.model.params.CallingTsapParameter;
 import org.apache.plc4x.java.isotp.protocol.model.params.ChecksumParameter;
 import org.apache.plc4x.java.isotp.protocol.model.params.Parameter;
 import org.apache.plc4x.java.isotp.protocol.model.params.TpduSizeParameter;
+import org.apache.plc4x.java.isotp.protocol.model.params.TsapParameterCalling;
 import org.apache.plc4x.java.isotp.protocol.model.types.*;
 import org.apache.plc4x.test.FastTests;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x7F);
 
-        ErrorTpdu tpdu = new ErrorTpdu(destinationReference, rejectCause, parameters, userData);
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu(destinationReference, rejectCause, parameters, userData);
 
         assertThat(tpdu.getTpduCode(), equalTo(TpduCode.TPDU_ERROR));
         assertThat("Unexpected destination reference", tpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -72,7 +72,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x7F);
 
-        ErrorTpdu tpdu = new ErrorTpdu(destinationReference, rejectCause, parameters, userData);
+        IsoTPErrorTpdu tpdu = new IsoTPErrorTpdu(destinationReference, rejectCause, parameters, userData);
 
         parameters.add(new TpduSizeParameter(TpduSize.SIZE_1024));
         parameters.add(new ChecksumParameter((byte) 0xFF));
@@ -80,7 +80,7 @@ public class IsotpModelTests {
         assertThat("Unexpected number of parameters", tpdu.getParameters(), hasSize(2));
         assertThat("Unexpected parameter", tpdu.getParameters(), contains(parameters.toArray()));
         assertThat("Checksum parameter should exist", tpdu.getParameter(ChecksumParameter.class).isPresent(), is(true));
-        assertThat("CallingTsapParameter parameter should not exist", !tpdu.getParameter(CallingTsapParameter.class).isPresent(), is(true));
+        assertThat("CallingTsapParameter parameter should not exist", !tpdu.getParameter(TsapParameterCalling.class).isPresent(), is(true));
     }
 
     @Test
@@ -91,7 +91,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x66);
 
-        DataTpdu tpdu = new DataTpdu(true, (byte) 0x7F, parameters, userData);
+        IsoTPDataTpdu tpdu = new IsoTPDataTpdu(true, (byte) 0x7F, parameters, userData);
 
         assertThat(tpdu.getTpduCode(), equalTo(TpduCode.DATA));
         assertThat("Unexpected eot reference", tpdu.isEot(), is(true));
@@ -111,7 +111,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x33);
 
-        ConnectionRequestTpdu tpdu = new ConnectionRequestTpdu(destinationReference, sourceReference, protocolClass, parameters, userData);
+        IsoTPConnectionRequestTpdu tpdu = new IsoTPConnectionRequestTpdu(destinationReference, sourceReference, protocolClass, parameters, userData);
 
         assertThat(tpdu.getTpduCode(), equalTo(TpduCode.CONNECTION_REQUEST));
         assertThat("Unexpected destination reference", tpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -132,7 +132,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x44);
 
-        ConnectionConfirmTpdu tpdu = new ConnectionConfirmTpdu(destinationReference, sourceReference, protocolClass, parameters, userData);
+        IsoTPConnectionConfirmTpdu tpdu = new IsoTPConnectionConfirmTpdu(destinationReference, sourceReference, protocolClass, parameters, userData);
 
         assertThat(tpdu.getTpduCode(), equalTo(TpduCode.CONNECTION_CONFIRM));
         assertThat("Unexpected destination reference", tpdu.getDestinationReference(), equalTo((short) 0x3));
@@ -153,7 +153,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x22);
 
-        DisconnectRequestTpdu tpdu = new DisconnectRequestTpdu(destinationReference, sourceReference, disconnectReason, parameters, userData);
+        IsoTPDisconnectRequestTpdu tpdu = new IsoTPDisconnectRequestTpdu(destinationReference, sourceReference, disconnectReason, parameters, userData);
 
         assertThat(tpdu.getTpduCode(), equalTo(TpduCode.DISCONNECT_REQUEST));
         assertThat("Unexpected destination reference", tpdu.getDestinationReference(), equalTo((short) 0x1));
@@ -173,7 +173,7 @@ public class IsotpModelTests {
 
         userData.writeByte(0x11);
 
-        DisconnectConfirmTpdu tpdu = new DisconnectConfirmTpdu(destinationReference, sourceReference, parameters, userData);
+        IsoTPDisconnectConfirmTpdu tpdu = new IsoTPDisconnectConfirmTpdu(destinationReference, sourceReference, parameters, userData);
 
         assertThat(tpdu.getTpduCode(), equalTo(TpduCode.DISCONNECT_CONFIRM));
         assertThat("Unexpected destination reference", tpdu.getDestinationReference(), equalTo((short) 0x3));

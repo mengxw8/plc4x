@@ -30,8 +30,8 @@ import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.api.exceptions.PlcProtocolPayloadTooBigException;
 import org.apache.plc4x.java.isotp.protocol.IsoTPProtocol;
 import org.apache.plc4x.java.isotp.protocol.events.IsoTPConnectedEvent;
-import org.apache.plc4x.java.isotp.protocol.model.IsoTPMessage;
-import org.apache.plc4x.java.isotp.protocol.model.tpdus.DataTpdu;
+import org.apache.plc4x.java.isotp.protocol.model.IsoTPDataTpdu;
+import org.apache.plc4x.java.isotp.protocol.model.IsoTPTpdu;
 import org.apache.plc4x.java.s7.netty.events.S7ConnectedEvent;
 import org.apache.plc4x.java.s7.netty.model.messages.S7Message;
 import org.apache.plc4x.java.s7.netty.model.messages.S7RequestMessage;
@@ -76,13 +76,13 @@ public class S7Protocol extends ChannelDuplexHandler {
 
         @Override
         public boolean acceptInboundMessage(Object msg) {
-            return msg instanceof IsoTPMessage;
+            return msg instanceof IsoTPTpdu;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         protected void decode(ChannelHandlerContext ctx, Object msg, List<Object> out) {
-            S7Protocol.this.decode(ctx, (IsoTPMessage) msg, out);
+            S7Protocol.this.decode(ctx, (IsoTPTpdu) msg, out);
         }
     };
 
@@ -97,7 +97,7 @@ public class S7Protocol extends ChannelDuplexHandler {
 
     // For being able to respect the max AMQ restrictions.
     private PendingWriteQueue queue;
-    private Map<Short, DataTpdu> sentButUnacknowledgedTpdus;
+    private Map<Short, IsoTPDataTpdu> sentButUnacknowledgedTpdus;
 
     public S7Protocol(short requestedMaxAmqCaller, short requestedMaxAmqCallee, short requestedPduSize,
                       S7ControllerType controllerType, S7MessageProcessor messageProcessor) {
@@ -213,7 +213,7 @@ public class S7Protocol extends ChannelDuplexHandler {
         } else {
             ChannelPromise subPromise = new DefaultChannelPromise(channel);
             // The tpduRef was 0x01 but had to be changed to 0x00 in order to support Siemens LOGO devices.
-            queue.add(new DataTpdu(true, (byte) 0x00, Collections.emptyList(), buf, message), subPromise);
+            queue.add(new IsoTPDataTpdu(true, (byte) 0x00, Collections.emptyList(), buf, message), subPromise);
             promiseCombiner.add((Future) subPromise);
             logger.debug("S7 Message with id {} queued", message.getTpduReference());
         }
@@ -411,7 +411,7 @@ public class S7Protocol extends ChannelDuplexHandler {
         super.channelRead(ctx, msg);
     }
 
-    protected void decode(ChannelHandlerContext ctx, IsoTPMessage in, List<Object> out) {
+    protected void decode(ChannelHandlerContext ctx, IsoTPTpdu in, List<Object> out) {
         if (logger.isTraceEnabled()) {
             logger.trace("Got Data: {}", ByteBufUtil.hexDump(in.getUserData()));
         }
@@ -462,7 +462,7 @@ public class S7Protocol extends ChannelDuplexHandler {
                 messageType, tpduReference, s7Parameters, s7Payloads, errorClass, errorCode);
 
             // Remove the current response from the list of unconfirmed messages.
-            DataTpdu requestTpdu = sentButUnacknowledgedTpdus.remove(tpduReference);
+            IsoTPDataTpdu requestTpdu = sentButUnacknowledgedTpdus.remove(tpduReference);
 
             // Get the corresponding request message.
             S7RequestMessage requestMessage = (requestTpdu != null) ? (S7RequestMessage) requestTpdu.getParent() : null;
@@ -780,7 +780,7 @@ public class S7Protocol extends ChannelDuplexHandler {
     private synchronized void trySendingMessages(ChannelHandlerContext ctx) {
         while(sentButUnacknowledgedTpdus.size() < maxAmqCaller) {
             // Get the TPDU that is up next in the queue.
-            DataTpdu curTpdu = (DataTpdu) queue.current();
+            IsoTPDataTpdu curTpdu = (IsoTPDataTpdu) queue.current();
 
             if (curTpdu != null) {
                 // Send the TPDU.

@@ -21,10 +21,16 @@ package org.apache.plc4x.java.spi;
 
 import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 
-public interface ModelIO<MODEL, SERIALIZED> {
+/**
+ * This interface is implemented by types used by internal protocol model tyoes and
+ * provides access to an IO component for serializing and deserializing these types.
+ *
+ * @param <OUTPUT> The type of the next lower level in the protocol stack
+ */
+public interface Model<OUTPUT> {
 
-    SERIALIZED encode(MODEL model) throws PlcProtocolException;
+    int getSerializedLength() throws PlcProtocolException;
 
-    MODEL decode(SERIALIZED serialized) throws PlcProtocolException;
+    OUTPUT serialize() throws PlcProtocolException;
 
 }

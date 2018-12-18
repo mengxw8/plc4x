@@ -20,12 +20,14 @@ package org.apache.plc4x.java.isoontcp.protocol.model;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.base.messages.PlcRawMessage;
+import org.apache.plc4x.java.spi.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IsoOnTcpMessage extends PlcRawMessage {
+public class IsoOnTcpMessage extends PlcRawMessage implements Model<ByteBuf> {
 
     private static final Logger logger = LoggerFactory.getLogger(IsoOnTcpMessage.class);
 
@@ -35,27 +37,41 @@ public class IsoOnTcpMessage extends PlcRawMessage {
         super(userData);
     }
 
-    public static class ModelIO implements org.apache.plc4x.java.spi.ModelIO<IsoOnTcpMessage> {
+    @Override
+    public int getSerializedLength() {
+        // Size of the 4 byte constant header plus the payload.
+        return 4 + getUserData().readableBytes();
+    }
+
+    @Override
+    public ByteBuf serialize() {
+        return new ModelIO().encode(this);
+    }
+
+    public static class ModelIO implements org.apache.plc4x.java.spi.ModelIO<IsoOnTcpMessage, ByteBuf> {
 
         @Override
-        public void encode(IsoOnTcpMessage model, ByteBuf out) throws PlcProtocolException {
+        public ByteBuf encode(IsoOnTcpMessage model) {
             final ByteBuf userData = model.getUserData();
 
             int packetSize = userData.readableBytes() + 4;
 
+            ByteBuf buf = Unpooled.buffer();
             // Version (is always constant 0x03)
-            out.writeByte(ISO_ON_TCP_MAGIC_NUMBER);
+            buf.writeByte(ISO_ON_TCP_MAGIC_NUMBER);
             // Reserved (is always constant 0x00)
-            out.writeByte((byte) 0x00);
+            buf.writeByte((byte) 0x00);
             // Packet length (including ISOonTCP header)
             // ("remaining" returns the number of bytes left to read in this buffer.
             // It is usually set to a read position of 0 and a limit at the end.
             // So in general remaining is equivalent to a non-existing
             // "userData.size()" method.)
-            out.writeShort((short) packetSize);
+            buf.writeShort((short) packetSize);
 
             // Output the payload.
-            out.writeBytes(userData);
+            buf.writeBytes(userData);
+
+            return buf;
         }
 
         @Override

@@ -19,12 +19,6 @@
 
 package org.apache.plc4x.java.spi;
 
-import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
-
-public interface ModelIO<MODEL, SERIALIZED> {
-
-    SERIALIZED encode(MODEL model) throws PlcProtocolException;
-
-    MODEL decode(SERIALIZED serialized) throws PlcProtocolException;
+public abstract class BaseModelIO<SELF, OUTPUT> implements ModelIO<SELF, OUTPUT> {
 
 }

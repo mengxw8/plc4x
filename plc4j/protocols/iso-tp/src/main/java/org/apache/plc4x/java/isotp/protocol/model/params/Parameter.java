@@ -18,10 +18,40 @@ under the License.
 */
 package org.apache.plc4x.java.isotp.protocol.model.params;
 
+import io.netty.buffer.ByteBuf;
+import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.isotp.protocol.model.types.ParameterCode;
 
 public interface Parameter {
 
     ParameterCode getType();
+
+    byte getLength();
+
+    void serialize(ByteBuf out);
+
+    static Parameter decode(ByteBuf out) throws PlcProtocolException {
+        byte parameterCodeByte = out.readByte();
+        ParameterCode parameterCode = ParameterCode.valueOf(parameterCodeByte);
+        if (parameterCode == null) {
+            throw new PlcProtocolException(
+                String.format("Unknown ISO-TO parameter code %02x", parameterCodeByte));
+        }
+
+        switch (parameterCode) {
+            case CALLING_TSAP:
+            case CALLED_TSAP:
+                return TsapParameter.decode(out, parameterCode);
+            case CHECKSUM:
+                return ChecksumParameter.decode(out);
+            case DISCONNECT_ADDITIONAL_INFORMATION:
+                return DisconnectAdditionalInformationParameter.decode(out);
+            case TPDU_SIZE:
+                return TpduSizeParameter.decode(out);
+            default:
+                throw new PlcProtocolException(
+                    String.format("Unimplemented ISO-TO parameter code %02x", parameterCodeByte));
+        }
+    }
 
 }

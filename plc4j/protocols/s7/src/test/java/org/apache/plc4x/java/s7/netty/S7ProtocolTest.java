@@ -21,7 +21,7 @@ package org.apache.plc4x.java.s7.netty;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
-import org.apache.plc4x.java.isotp.protocol.model.tpdus.DataTpdu;
+import org.apache.plc4x.java.isotp.protocol.model.IsoTPDataTpdu;
 import org.apache.plc4x.java.s7.netty.model.messages.S7RequestMessage;
 import org.apache.plc4x.java.s7.netty.model.messages.SetupCommunicationRequestMessage;
 import org.apache.plc4x.java.s7.netty.model.params.CpuServicesRequestParameter;
@@ -77,9 +77,9 @@ public class S7ProtocolTest {
         Object outbound = SUT.readOutbound();
 
         assertThat("The protocol layer should have output something", outbound, notNullValue());
-        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(DataTpdu.class));
+        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(IsoTPDataTpdu.class));
 
-        DataTpdu dataTpdu = (DataTpdu) outbound;
+        IsoTPDataTpdu dataTpdu = (IsoTPDataTpdu) outbound;
         assertThat("The DataTpdu shouldn't have any parameters", dataTpdu.getParameters().isEmpty(), equalTo(true));
 
         byte[] actUserData = new byte[dataTpdu.getUserData().readableBytes()];
@@ -124,9 +124,9 @@ public class S7ProtocolTest {
         Object outbound = SUT.readOutbound();
 
         assertThat("The protocol layer should have output something", outbound, notNullValue());
-        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(DataTpdu.class));
+        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(IsoTPDataTpdu.class));
 
-        DataTpdu dataTpdu = (DataTpdu) outbound;
+        IsoTPDataTpdu dataTpdu = (IsoTPDataTpdu) outbound;
         assertThat("The DataTpdu shouldn't have any parameters", dataTpdu.getParameters().isEmpty(), equalTo(true));
 
         byte[] actUserData = new byte[dataTpdu.getUserData().readableBytes()];
@@ -187,9 +187,9 @@ public class S7ProtocolTest {
         Object outbound = SUT.readOutbound();
 
         assertThat("The protocol layer should have output something", outbound, notNullValue());
-        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(DataTpdu.class));
+        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(IsoTPDataTpdu.class));
 
-        DataTpdu dataTpdu = (DataTpdu) outbound;
+        IsoTPDataTpdu dataTpdu = (IsoTPDataTpdu) outbound;
         assertThat("The DataTpdu shouldn't have any parameters", dataTpdu.getParameters().isEmpty(), equalTo(true));
 
         byte[] actUserData = new byte[dataTpdu.getUserData().readableBytes()];
@@ -248,9 +248,9 @@ public class S7ProtocolTest {
         Object outbound = SUT.readOutbound();
 
         assertThat("The protocol layer should have output something", outbound, notNullValue());
-        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(DataTpdu.class));
+        assertThat("The output should have been of type DataTpdu", outbound, instanceOf(IsoTPDataTpdu.class));
 
-        DataTpdu dataTpdu = (DataTpdu) outbound;
+        IsoTPDataTpdu dataTpdu = (IsoTPDataTpdu) outbound;
         assertThat("The DataTpdu shouldn't have any parameters", dataTpdu.getParameters().isEmpty(), equalTo(true));
 
         byte[] actUserData = new byte[dataTpdu.getUserData().readableBytes()];

@@ -18,6 +18,8 @@ under the License.
 */
 package org.apache.plc4x.java.isotp.protocol.model.params;
 
+import io.netty.buffer.ByteBuf;
+import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.isotp.protocol.model.types.ParameterCode;
 import org.apache.plc4x.java.isotp.protocol.model.types.TpduSize;
 
@@ -36,6 +38,26 @@ public class TpduSizeParameter implements Parameter {
 
     public TpduSize getTpduSize() {
         return tpduSize;
+    }
+
+    @Override
+    public byte getLength() {
+        return 3;
+    }
+
+    @Override
+    public void serialize(ByteBuf out) {
+        out.writeByte(getType().getCode());
+        // Output the size of the rest of the header (Total size of the header - 2)
+        out.writeByte(getLength() - 2);
+        out.writeByte(getTpduSize().getCode());
+    }
+
+    public static TpduSizeParameter decode(ByteBuf in) throws PlcProtocolException {
+        // Skip the length.
+        in.skipBytes(1);
+        TpduSize size = TpduSize.valueOf(in.readByte());
+        return new TpduSizeParameter(size);
     }
 
 }

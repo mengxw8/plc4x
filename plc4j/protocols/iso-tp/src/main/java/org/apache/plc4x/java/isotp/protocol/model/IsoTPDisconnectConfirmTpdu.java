@@ -16,25 +16,23 @@
  specific language governing permissions and limitations
  under the License.
  */
-package org.apache.plc4x.java.isoontcp.protocol;
-
+package org.apache.plc4x.java.isotp.protocol.model;
 
 import io.netty.buffer.ByteBuf;
-import org.apache.plc4x.java.isoontcp.protocol.model.IsoOnTcpMessage;
-import org.apache.plc4x.java.spi.BaseOutputProtocol;
-import org.apache.plc4x.java.spi.ModelIO;
+import org.apache.plc4x.java.isotp.protocol.model.params.Parameter;
+import org.apache.plc4x.java.isotp.protocol.model.types.TpduCode;
 
-public class IsoOnTcpProtocol extends BaseOutputProtocol<IsoOnTcpMessage> {
+import java.util.LinkedList;
+import java.util.List;
 
-    private final IsoOnTcpMessage.ModelIO rootModelIO;
+public class IsoTPDisconnectConfirmTpdu extends IsoTPDisconnectTpdu {
 
-    public IsoOnTcpProtocol() {
-        rootModelIO = new IsoOnTcpMessage.ModelIO();
+    public IsoTPDisconnectConfirmTpdu(short destinationReference, short sourceReference, ByteBuf userData) {
+        super(TpduCode.DISCONNECT_CONFIRM, destinationReference, sourceReference, new LinkedList<>(), userData);
     }
 
-    @Override
-    protected ModelIO<IsoOnTcpMessage, ByteBuf> getRootModelIo() {
-        return rootModelIO;
+    public IsoTPDisconnectConfirmTpdu(short destinationReference, short sourceReference, List<Parameter> parameters, ByteBuf userData) {
+        super(TpduCode.DISCONNECT_CONFIRM, destinationReference, sourceReference, parameters, userData);
     }
 
 }

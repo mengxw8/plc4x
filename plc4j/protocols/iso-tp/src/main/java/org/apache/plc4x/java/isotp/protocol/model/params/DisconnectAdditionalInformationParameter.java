@@ -19,6 +19,8 @@ under the License.
 package org.apache.plc4x.java.isotp.protocol.model.params;
 
 
+import io.netty.buffer.ByteBuf;
+import org.apache.plc4x.java.api.exceptions.PlcProtocolException;
 import org.apache.plc4x.java.isotp.protocol.model.types.ParameterCode;
 
 public class DisconnectAdditionalInformationParameter implements Parameter {
@@ -36,6 +38,26 @@ public class DisconnectAdditionalInformationParameter implements Parameter {
 
     public byte[] getData() {
         return data;
+    }
+
+    @Override
+    public byte getLength() {
+        return (byte) (getData().length + 2);
+    }
+
+    @Override
+    public void serialize(ByteBuf out) {
+        out.writeByte(getType().getCode());
+        // Output the size of the rest of the header (Total size of the header - 2)
+        out.writeByte(getLength() - 2);
+        out.writeBytes(getData());
+    }
+
+    public static DisconnectAdditionalInformationParameter decode(ByteBuf in) throws PlcProtocolException {
+        byte length = in.readByte();
+        byte[] data = new byte[length];
+        in.readBytes(data);
+        return new DisconnectAdditionalInformationParameter(data);
     }
 
 }
