@@ -51,6 +51,7 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
         // When we have test-fails e.g. we don't need to run the remaining steps
         skipStagesAfterUnstable()
+        buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '3'))
     }
 
     stages {
@@ -153,6 +154,11 @@ pipeline {
 
                 // Deploy the artifacts using the wagon-maven-plugin.
                 sh 'mvn -f jenkins.pom -X -P deploy-snapshots wagon:upload'
+
+                // Clean up the snapshots directory (freeing up more space after deploying).
+                dir("local-snapshots-dir/") {
+                    deleteDir()
+                }
             }
         }
 
@@ -191,13 +197,19 @@ pipeline {
             steps {
                 echo 'Deploying Site'
                 // Clean up the site directory.
-                dir("ltarget/staging") {
+                dir("target/staging") {
                     deleteDir()
                 }
+
                 // Unstash the previously stashed site.
                 unstash 'plc4x-site'
                 // Publish the site with the scm-publish plugin.
                 sh 'mvn -f jenkins.pom -X -P deploy-site scm-publish:publish-scm'
+
+                // Clean up the snapshots directory (freeing up more space after deploying).
+                dir("target/staging") {
+                    deleteDir()
+                }
             }
         }
     }
@@ -242,6 +254,9 @@ Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BRANC
 
         // Send an email, if the last build was not successful and this one is.
         success {
+            // Cleanup the build directory if the build was successful
+            // (in this cae we probably don't have to do any post-build analysis)
+            deleteDir()
             script {
                 if ((env.BRANCH_NAME == "develop") && (currentBuild.previousBuild != null) && (currentBuild.previousBuild.result != 'SUCCESS')) {
                     emailext (
